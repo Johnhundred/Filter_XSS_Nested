@@ -3,4 +3,4 @@ Node.js filter function to recursively filter nested objects/arrays, relying on 
 
 ## Notice
 
-This is a :construnction: Work In Progress :construction: - meaning certain things are lacking. For example, there is no iteration limit, meaning that objects with circular references will continue to run forever - until your server crashes. This will be implemented eventually.
+This is a :construction: Work In Progress :construction: - meaning certain things are lacking. For example, there is no iteration limit, meaning that objects with circular references will continue to run forever - until your server crashes. This will be implemented eventually.
