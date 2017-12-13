@@ -1,6 +1,19 @@
 # Filter_XSS_Nested
+
 Node.js filter function to recursively filter nested objects/arrays, relying on https://www.npmjs.com/package/xss-filters - import the xssProtect function and pass a var into it to sanitize it.
+
+The filter function handles arrays, objects and simple types, though it will only actually filter strings.
 
 ## Notice
 
-This is a :construction: Work In Progress :construction: - meaning certain things are lacking. For example, there is no iteration limit, meaning that objects with circular references will continue to run forever - until your server crashes. This will be implemented eventually.
+:construction: :construction: :construction: Work In Progress :construction: :construction: :construction:
+
+Meaning: Certain things are lacking.
+
+### Current Bugs
+
+No iteration limit: Objects with circular references will continue to run forever - until your server crashes.
+Fix: Implement an iteration counter, with the option to set iteration count, or disable it.
+
+No variable type array support: When the filter encounters an array, it assumes the array is filled with values similar to the first one to save time.
+Fix: Implement option to check all array elements separately - and code to do this.
