@@ -13,7 +13,10 @@ Meaning: Certain things are lacking.
 ### Current Bugs
 
 No iteration limit: Objects with circular references will continue to run forever - until your server crashes.
-Fix: Implement an iteration counter, with the option to set iteration count, or disable it.
+
+Fix: Implement an iteration depth counter, with the option to set iteration depth count, or disable it.
+
 
 No variable type array support: When the filter encounters an array, it assumes the array is filled with values similar to the first one to save time.
+
 Fix: Implement option to check all array elements separately - and code to do this.
