@@ -1,0 +1,11 @@
+{
+  "name": "Filter_XSS_Nested",
+  "version": "0.1.0",
+  "private": false,
+  "engines": {
+    "node": "8.9.3"
+  },
+  "dependencies": {
+    "xss-filters": "^1.2.7"
+  }
+}
