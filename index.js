@@ -1,13 +1,7 @@
 const xssFilters = require('xss-filters');
 
-// Filter provided var
-module.exports.getXssFilteredVar = (str) => {
-  // Is var a string?
-  if (module.exports.isString(str)) {
-    return xssFilters.inHTMLData(str);
-  }
-
-  return str;
+module.exports.filterString = (str) => {
+  return xssFilters.inHTMLData(str);
 };
 
 // Check if provided var is a string
@@ -19,72 +13,66 @@ module.exports.isArray = value => Object.prototype.toString.call(value) === '[ob
 // Check if provided var is an object
 module.exports.isObject = value => !module.exports.isArray(value) && value instanceof Object;
 
-// Check if provided var is an array of objects
-// Check first item in array, assume it is indicative of the rest
-module.exports.isArrayOfObjects = value => module.exports.isArray(value) && module.exports.isObject(value[0]);
+// Check if provided var is an iterable
+module.exports.isIterable = value => typeof value[Symbol.iterator] === 'function';
 
-// Filter provided, potentially nested, object from XSS attempts
-// If an array is encountered, the first element is tested
-// Depending on the datatype of the first element, a filtering function is used
-module.exports.getXssFilteredObject = (obj) => {
-  Object.keys(obj).forEach((key) => {
-    // Is the current object value an array?
-    if (module.exports.isArray(obj[key])) {
-      // Is first array element an object or another type?
-      if (module.exports.isObject(obj[key][0])) {
-        obj[key] = module.exports.getXssFilteredArrayOfObjects(obj[key]);
-      } else {
-        obj[key] = module.exports.getXssFilteredArray(obj[key]);
-      }
-    } else if (module.exports.isObject(obj[key])) {
-      // Current object value was an object, trigger recursion to iterate over the nested object
-      obj[key] = module.exports.getXssFilteredObject(obj[key]);
-    }
+module.exports.getVarType = (value) => {
+  // Is number or boolean?
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return 'skip';
+  }
 
-    // Current object value was not an array or object, is it a string?
-    if (module.exports.isString(obj[key])) {
-      obj[key] = module.exports.getXssFilteredVar(obj[key]);
-    }
-  });
+  // is string?
+  if (module.exports.isString(value)) {
+    return 'string';
+  }
 
-  return obj;
+  // String, Array, TypedArray, Map and Set all implement the iterable protocol. Strings are caught above.
+  if (module.exports.isIterable(value)) {
+    return 'iterable';
+  }
+
+  // is object?
+  if (module.exports.isObject(value)) {
+    return 'object';
+  }
+
+  return 'skip';
 };
 
-// Filter provided array of, potentially nested, objects from XSS attempts
-module.exports.getXssFilteredArrayOfObjects = (arrObj) => {
-  // We are getting an array of objects
-  // Iterate over each object in the array
-  arrObj.map(obj => module.exports.getXssFilteredObject(obj));
+module.exports.handler = (item) => {
+  // Detect incoming type
+  const type = module.exports.getVarType(item);
 
-  return arrObj;
-};
+  // If it's a skip, skip it.
+  if (type === 'skip') {
+    return item;
+  }
 
-module.exports.getXssFilteredArray = (arr) => {
-  // We are getting an array of non-objects
-  // Iterate over each and filter
-  arr.map(item => module.exports.getXssFilteredVar(item));
+  // If it's a string, filter it and move on.
+  if (type === 'string') {
+    return module.exports.filterString(item);
+  }
 
-  return arr;
-};
+  // If it's an object, iterate over the values recursively.
+  if (type === 'object') {
+    Object.keys(item).forEach((key) => {
+      item[key] = module.exports.handler(item[key]);
+    });
 
-module.exports.xssProtect = item =>
-  new Promise((resolve) => {
-    // Is item an array?
-    if (module.exports.isArray(item)) {
-      // Item is an array, is it an array of objects?
-      if (module.exports.isObject(item[0])) {
-        const newItem = module.exports.getXssFilteredArrayOfObjects(item);
-        resolve(newItem);
-      } else {
-        const newItem = module.exports.getXssFilteredArray(item);
-        resolve(newItem);
-      }
-    // Item was not an array, is it an object?
-    } else if (module.exports.isObject(item)) {
-      const newItem = module.exports.getXssFilteredObject(item);
-      resolve(newItem);
-    } else {
-      const newItem = module.exports.getXssFilteredVar(item);
-      resolve(newItem);
+    return item;
+  }
+
+  // If it's an iterable, iterate over the values recursively.
+  if (type === 'iterable') {
+    for (let i of item.entries()) {
+      item[i[0]] = module.exports.handler(i[1]);
     }
-  });
+
+    return item;
+  }
+};
+
+module.exports.xssProtect = (item) => {
+  return module.exports.handler(item);
+};
